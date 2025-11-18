@@ -20,7 +20,7 @@ def get_gsheet():
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
     client = gspread.authorize(credentials)
-    sheet = client.open("ExpensesBot")   # ← name of your Google Sheet
+    sheet = client.open("expenses_bot_sheet")   # ← name of Google Sheet
     return sheet
 
 
@@ -100,5 +100,6 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
