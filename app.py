@@ -16,14 +16,19 @@ def get_gsheet():
     creds_json = os.getenv("GOOGLE_CREDS")
     creds_dict = json.loads(creds_json)
 
-    scope = ["https://www.googleapis.com/auth/spreadsheets"]
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
     client = gspread.authorize(credentials)
-    sheet = client.open("expenses_bot_sheet")   # ← name of Google Sheet
-    return sheet
-
-
+    try:
+        sheet = client.open("expenses_bot_sheet")
+        return sheet
+    except gspread.exceptions.APIError as e:
+        print("Failed to open sheet:", e)
+        raise
 # -------------------------------------------------------
 #  ENSURE MONTH SHEET EXISTS
 # -------------------------------------------------------
@@ -100,6 +105,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
