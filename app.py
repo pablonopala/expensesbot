@@ -23,7 +23,7 @@ def send_message(chat_id, text):
     requests.post(url, json=payload)
 
 
-@app.route("/", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json()
 
@@ -65,10 +65,11 @@ def webhook():
     return "ok"
 
 
-@app.route("/", methods=["GET"])
+@app.route("/webhook", methods=["POST"])
 def health():
     return "Bot is running."
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
