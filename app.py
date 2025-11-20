@@ -103,6 +103,10 @@ def webhook():
             send_message(chat_id, delete_expense(text))
             return "ok"
 
+        if text == "/catsummary":
+            send_message(chat_id, get_category_summary(), markdown=True)
+            return "ok"
+
         # If not a command → treat as expense
         response = save_expense(text)
         send_message(chat_id, response)
@@ -154,6 +158,31 @@ def delete_expense(text):
     except Exception as e:
         return f"Error deleting row: {e}"
 
+def get_category_summary():
+    ws, data = read_month_data()
+
+    if not data:
+        return "No expenses recorded this month."
+
+    category_totals = {}
+    category_counts = {}
+
+    for row in data:
+        cat = row.get("Category", "general").lower()
+        amt = float(row.get("Amount", 0))
+
+        category_totals[cat] = category_totals.get(cat, 0) + amt
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+
+    msg = "📊 *Category Summary (Total & Average)*\n\n"
+    for cat in category_totals:
+        total = category_totals[cat]
+        count = category_counts[cat]
+        avg = total / count if count else 0
+        msg += f"- *{cat.capitalize()}* → Total: {total:.2f}, Avg: {avg:.2f}\n"
+
+    return msg
+
 
 @app.route("/")
 def home():
@@ -162,6 +191,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
