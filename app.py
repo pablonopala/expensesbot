@@ -6,7 +6,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 from flask import Flask, request
 
 app = Flask(__name__)
-
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 # -------------------------------------------------------
@@ -29,9 +28,8 @@ def get_gsheet():
     except gspread.exceptions.APIError as e:
         print("Failed to open sheet:", e)
         raise
-        
 # -------------------------------------------------------
-#  ENSURE MONTH SHEET EXISTS
+#  ENSURE MONTH-YEAR SHEET EXISTS
 # -------------------------------------------------------
 def get_month_sheet():
     sheet = get_gsheet()
@@ -47,7 +45,6 @@ def get_month_sheet():
         ws.append_row(["Date", "Description", "Amount", "Category"])
     
     return ws
-
 # -------------------------------------------------------
 #  SAVE EXPENSE
 # -------------------------------------------------------
@@ -67,83 +64,23 @@ def save_expense(text):
     ws.append_row([today, description, amount, category])
 
     return f"Saved: {description} - {amount} ({category})"
-
 # -------------------------------------------------------
-# TELEGRAM WEBHOOK
+#  READ MONTH DATA
 # -------------------------------------------------------
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    data = request.json
-
-    if "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        text = data["message"].get("text", "").lower()
-
-        # Special command: get current month's sheet URL
-        if text == "csv":
-            sheet = get_gsheet()
-            month_name = datetime.datetime.now().strftime("%B")
-            year = datetime.datetime.now().strftime("%Y")
-            sheet_name = f"{month_name} {year}"
-            ws = sheet.worksheet(sheet_name)
-            url = sheet.url
-            send_message(chat_id, f"Your sheet:\n{url}")
-            return "ok"
-
-        # TELEGRAM COMMANDS
-        if text == "/summary":
-            send_message(chat_id, get_summary(), markdown=True)
-            return "ok"
-
-        if text == "/month":
-            send_message(chat_id, get_month_total(), markdown=True)
-            return "ok"
-
-        if text.startswith("/delete"):
-            send_message(chat_id, delete_expense(text))
-            return "ok"
-
-        if text == "/catsummary":
-            send_message(chat_id, get_category_summary(), markdown=True)
-            return "ok"
-
-        # If not a command → treat as expense
-        response = save_expense(text)
-        send_message(chat_id, response)
-
-    return "ok"
-
+def read_month_data():
+    ws = get_month_sheet()              
+    data = ws.get_all_records()         
+    return ws, data
+# -------------------------------------------------------
+#  SEND TELEGRAM MESSAGE
+# -------------------------------------------------------
 def send_message(chat_id, text):
     import requests
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url, json={"chat_id": chat_id, "text": text})
-
-def get_summary():
-    ws, data = read_month_data()
-
-    totals = {}
-    for row in data:
-        cat = row.get("Category", "general")
-        amt = float(row.get("Amount", 0))
-        totals[cat] = totals.get(cat, 0) + amt
-
-    if not totals:
-        return "No expenses recorded this month."
-
-    msg = "📊 *Summary by Category:*\n"
-    for cat, total in totals.items():
-        msg += f"- *{cat.capitalize()}*: {total}\n"
-
-    return msg
-
-
-def get_month_total():
-    ws, data = read_month_data()
-    total = sum(float(row.get("Amount", 0)) for row in data)
-
-    return f"💸 *Total spent this month:* {total}"
-
-
+# -------------------------------------------------------
+#  DELETE A ROW
+# -------------------------------------------------------
 def delete_expense(text):
     parts = text.split()
     if len(parts) != 2 or not parts[1].isdigit():
@@ -157,7 +94,9 @@ def delete_expense(text):
         return f"🗑️ Deleted row {row_number}"
     except Exception as e:
         return f"Error deleting row: {e}"
-
+# -------------------------------------------------------
+#  SUMMARY BY CATEGORY
+# -------------------------------------------------------
 def get_category_summary():
     ws, data = read_month_data()
 
@@ -183,6 +122,44 @@ def get_category_summary():
 
     return msg
 
+# -------------------------------------------------------
+# TELEGRAM WEBHOOK
+# -------------------------------------------------------
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.json
+
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "").lower()
+
+        # Special command: get current month's sheet URL
+        if text == "csv":
+            sheet = get_gsheet()
+            month_name = datetime.datetime.now().strftime("%B")
+            year = datetime.datetime.now().strftime("%Y")
+            sheet_name = f"{month_name} {year}"
+            ws = sheet.worksheet(sheet_name)
+            url = sheet.url
+            send_message(chat_id, f"Your sheet:\n{url}")
+            return "ok"
+
+        # TELEGRAM COMMANDS
+        if text.startswith("/delete"):
+            send_message(chat_id, delete_expense(text))
+            return "ok"
+
+        if text == "/catsummary":
+            send_message(chat_id, get_category_summary(), markdown=True)
+            return "ok"
+
+        # If not a command → treat as expense
+        response = save_expense(text)
+        send_message(chat_id, response)
+
+    return "ok"
+
+
 
 @app.route("/")
 def home():
@@ -191,6 +168,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
