@@ -150,7 +150,7 @@ def webhook():
             return "ok"
 
         if text == "/catsummary":
-            send_message(chat_id, get_category_summary(), markdown=True)
+            send_message(chat_id, get_category_summary())
             return "ok"
 
         # If not a command → treat as expense
@@ -168,6 +168,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
