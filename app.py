@@ -104,24 +104,22 @@ def get_category_summary():
         return "No expenses recorded this month."
 
     category_totals = {}
-    category_counts = {}
+    total_general = 0
 
     for row in data:
         cat = row.get("Category", "general").lower()
         amt = float(row.get("Amount", 0))
 
         category_totals[cat] = category_totals.get(cat, 0) + amt
-        category_counts[cat] = category_counts.get(cat, 0) + 1
+        total_general += amt
 
-    msg = "📊 *Category Summary (Total & Average)*\n\n"
-    for cat in category_totals:
-        total = category_totals[cat]
-        count = category_counts[cat]
-        avg = total / count if count else 0
-        msg += f"- *{cat.capitalize()}* → Total: {total:.2f}, Avg: {avg:.2f}\n"
+    msg = "📊 *Category Summary (Total)*\n\n"
+    for cat, total in category_totals.items():
+        msg += f"- *{cat.capitalize()}* → {total:.2f}\n"
+
+    msg += f"\n🧮 *Total General:* {total_general:.2f}"
 
     return msg
-
 # -------------------------------------------------------
 # TELEGRAM WEBHOOK
 # -------------------------------------------------------
@@ -168,6 +166,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
