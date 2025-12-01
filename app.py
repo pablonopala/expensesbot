@@ -95,6 +95,33 @@ def delete_expense_last():
 # -------------------------------------------------------
 #  SUMMARY BY CATEGORY
 # -------------------------------------------------------
+def parse_month_year(text):
+    """
+    Input examples:
+      /catsummary
+      /catsummary November
+      /catsummary November 2025
+    """
+
+    parts = text.split()
+    month = datetime.datetime.now().strftime("%B")
+    year = datetime.datetime.now().strftime("%Y")
+
+    if len(parts) >= 2:
+        month_input = parts[1].capitalize()
+        try:
+            datetime.datetime.strptime(month_input, "%B")
+            month = month_input
+        except ValueError:
+            return None, None
+
+    if len(parts) == 3:
+        year_input = parts[2]
+        if year_input.isdigit():
+            year = year_input
+
+    return month, year
+
 def get_category_summary(text="/catsummary"):
     month, year = parse_month_year(text)
 
@@ -178,6 +205,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
