@@ -97,11 +97,24 @@ def delete_expense(text):
 # -------------------------------------------------------
 #  SUMMARY BY CATEGORY
 # -------------------------------------------------------
-def get_category_summary():
-    ws, data = read_month_data()
+def get_category_summary(text="/catsummary"):
+    month, year = parse_month_year(text)
+
+    if not month:
+        return "❌ Invalid month. Try: /catsummary November 2025"
+
+    sheet = get_gsheet()
+    sheet_name = f"{month} {year}"
+
+    try:
+        ws = sheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        return f"❌ No sheet found for *{sheet_name}*."
+
+    data = ws.get_all_records()
 
     if not data:
-        return "No expenses recorded this month."
+        return f"No expenses found for {sheet_name}."
 
     category_totals = {}
     total_general = 0
@@ -113,13 +126,14 @@ def get_category_summary():
         category_totals[cat] = category_totals.get(cat, 0) + amt
         total_general += amt
 
-    msg = "📊 *Category Summary (Total)*\n\n"
+    msg = f"📊 *Category Summary – {month} {year}*\n\n"
     for cat, total in category_totals.items():
         msg += f"- *{cat.capitalize()}* → {total:.2f}\n"
 
     msg += f"\n🧮 *Total General:* {total_general:.2f}"
 
     return msg
+
 # -------------------------------------------------------
 # TELEGRAM WEBHOOK
 # -------------------------------------------------------
@@ -166,6 +180,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
