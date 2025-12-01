@@ -155,11 +155,11 @@ def webhook():
             return "ok"
 
         # TELEGRAM COMMANDS
-       if text == "/delete":
+        if text == "/delete":
             send_message(chat_id, delete_expense_last())
             return "ok"
 
-       if text.startswith("/catsummary"):
+        if text.startswith("/catsummary"):
             send_message(chat_id, get_category_summary(text))
             return "ok"
 
@@ -178,6 +178,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
