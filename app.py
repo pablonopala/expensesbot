@@ -161,8 +161,8 @@ def webhook():
             send_message(chat_id, delete_expense(text))
             return "ok"
 
-        if text == "/catsummary":
-            send_message(chat_id, get_category_summary())
+       if text.startswith("/catsummary"):
+            send_message(chat_id, get_category_summary(text))
             return "ok"
 
         # If not a command → treat as expense
@@ -180,6 +180,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
