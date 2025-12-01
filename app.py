@@ -81,19 +81,17 @@ def send_message(chat_id, text):
 # -------------------------------------------------------
 #  DELETE A ROW
 # -------------------------------------------------------
-def delete_expense(text):
-    parts = text.split()
-    if len(parts) != 2 or not parts[1].isdigit():
-        return "Usage: /delete <row_number>"
-
-    row_number = int(parts[1])
+def delete_expense_last():
     ws = get_month_sheet()
+    rows = ws.get_all_values()
 
-    try:
-        ws.delete_rows(row_number)
-        return f"🗑️ Deleted row {row_number}"
-    except Exception as e:
-        return f"Error deleting row: {e}"
+    if len(rows) <= 1:
+        return "No expenses to delete."
+
+    last_row = len(rows)
+    ws.delete_rows(last_row)
+
+    return f"🗑️ Deleted last expense (row {last_row})"
 # -------------------------------------------------------
 #  SUMMARY BY CATEGORY
 # -------------------------------------------------------
@@ -157,8 +155,8 @@ def webhook():
             return "ok"
 
         # TELEGRAM COMMANDS
-        if text.startswith("/delete"):
-            send_message(chat_id, delete_expense(text))
+       if text == "/delete":
+            send_message(chat_id, delete_expense_last())
             return "ok"
 
        if text.startswith("/catsummary"):
@@ -180,6 +178,7 @@ def home():
 
 if __name__ == "__main__":
     app.run()
+
 
 
 
